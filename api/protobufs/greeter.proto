@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+option go_package = "api/protobufs/";
+
+service Greeter {
+    rpc UnaryHello(UnaryHelloRequest) returns (UnaryHelloResponse) {}
+    rpc ServerStreamingHello(ServerStreamingHelloRequest) returns (stream ServerStreamingHelloResponse) {}
+    rpc ClientStreamingHello(stream ClientStreamingHelloRequest) returns (ClientStreamingHelloResponse) {}
+    rpc BidirectionalStreamingHello(stream BidirectionalStreamingHelloRequest) returns (stream BidirectionalStreamingHelloResponse) {}
+}
+
+message UnaryHelloRequest {
+    string name = 1;
+}
+
+message UnaryHelloResponse {
+    int32 code = 1;
+    string message = 2;
+}
+
+message ServerStreamingHelloRequest {
+    string name = 1;
+}
+
+message ServerStreamingHelloResponse {
+    string message = 1;
+}
+
+message ClientStreamingHelloRequest {
+    string name = 1;
+}
+
+message ClientStreamingHelloResponse {
+    string message = 1;
+}
+
+message BidirectionalStreamingHelloRequest {
+    string name = 1;
+}
+
+message BidirectionalStreamingHelloResponse {
+    string message = 1;
+}
