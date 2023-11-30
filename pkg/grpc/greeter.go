@@ -9,6 +9,7 @@ import (
 
 type greeterServer struct {
 	protobufs.UnimplementedGreeterServer
+	savedMessages []string
 }
 
 func (gs *greeterServer) UnaryHello(_ context.Context, req *protobufs.UnaryHelloRequest) (*protobufs.UnaryHelloResponse, error) {
@@ -28,7 +29,16 @@ func (gs *greeterServer) UnaryHello(_ context.Context, req *protobufs.UnaryHello
 	}
 }
 
-func (gs *greeterServer) ServerStreamingHello(*protobufs.ServerStreamingHelloRequest, protobufs.Greeter_ServerStreamingHelloServer) error {
+func (gs *greeterServer) ServerStreamingHello(
+	_ *protobufs.ServerStreamingHelloRequest,
+	stream protobufs.Greeter_ServerStreamingHelloServer) error {
+
+	for _, savedMessage := range gs.savedMessages {
+		err := stream.Send(&protobufs.ServerStreamingHelloResponse{Message: savedMessage})
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -41,5 +51,13 @@ func (gs *greeterServer) BidirectionalStreamingHello(protobufs.Greeter_Bidirecti
 }
 
 func NewServer() *greeterServer {
-	return &greeterServer{}
+	return &greeterServer{
+		savedMessages: []string{
+			"test1",
+			"test2",
+			"test3",
+			"test4",
+			"test5",
+		},
+	}
 }

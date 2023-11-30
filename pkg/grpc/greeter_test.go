@@ -3,6 +3,7 @@ package grpc_test
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"testing"
 
@@ -120,6 +121,48 @@ func TestUnaryHelloValidateResponse(t *testing.T) {
 
 		if resp.Message != testCase.errormsg {
 			t.Fatalf("expected message 'ok' but got %s", resp.Message)
+		}
+	}
+}
+
+func TestServerStreamingHello(t *testing.T) {
+	grpcClient, cleanUp := setupGRPC()
+	defer cleanUp()
+
+	stream, err := grpcClient.ServerStreamingHello(context.Background(), &protobufs.ServerStreamingHelloRequest{Name: "test"})
+	if err != nil {
+		t.Fatalf("server streaming hello returned error: %s", err)
+	}
+
+	testCases := []string{
+		"test1",
+		"test2",
+		"test3",
+		"test4",
+		"test5",
+	}
+
+	recvMessages := make([]string, 0)
+	for {
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			t.Fatalf("%v.ServerStreamingHello(_) = _, %v", grpcClient, err)
+		}
+
+		recvMessages = append(recvMessages, resp.Message)
+	}
+
+	if len(testCases) != len(recvMessages) {
+		t.Fatalf("expected to recv %d messages but got %d", len(testCases), len(recvMessages))
+	}
+
+	for i := range testCases {
+		if testCases[i] != recvMessages[i] {
+			t.Fatalf("expected message %s but got %s", testCases[i], recvMessages[i])
 		}
 	}
 }
