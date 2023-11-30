@@ -18,9 +18,9 @@ func (gs *greeterServer) UnaryHello(_ context.Context, req *protobufs.UnaryHello
 	    case "test1":
 	        return &protobufs.UnaryHelloResponse{Code: 2, Message: "name can not be 'test1'"}, nil
 	    case "test2":
-	        return &protobufs.UnaryHelloResponse{Code: 2, Message: "name can not be 'test1'"}, nil
+	        return &protobufs.UnaryHelloResponse{Code: 2, Message: "name can not be 'test2'"}, nil
 	    case "test3":
-	        return &protobufs.UnaryHelloResponse{Code: 2, Message: "name can not be 'test1'"}, nil
+	        return &protobufs.UnaryHelloResponse{Code: 2, Message: "name can not be 'test3'"}, nil
 	    case "test4":
 	        return &protobufs.UnaryHelloResponse{Code: 1, Message: "Wow!"}, nil
 	    default:

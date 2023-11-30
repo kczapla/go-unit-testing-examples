@@ -21,7 +21,7 @@ func setupGRPC() (protobufs.GreeterClient, CleanUpFunc) {
 	serviceServer := grpcGreeter.NewServer()
 	protobufs.RegisterGreeterServer(grpcServer, serviceServer)
 
-	listener := bufconn.Listen(1024*1024)
+	listener := bufconn.Listen(1024 * 1024)
 	go func() {
 		if err := grpcServer.Serve(listener); err != nil {
 			panic("server did not shutdown gracefully")
@@ -43,7 +43,7 @@ func setupGRPC() (protobufs.GreeterClient, CleanUpFunc) {
 	grpcServerConnection, err := grpc.DialContext(
 		ctx,
 		"",
-		dialOptions...
+		dialOptions...,
 	)
 
 	if err != nil {
@@ -64,7 +64,7 @@ func TestUnaryHelloOkResponse(t *testing.T) {
 	defer cleanUp()
 
 	resp, err := grpcClient.UnaryHello(context.Background(), &protobufs.UnaryHelloRequest{Name: "foo"})
-	
+
 	if err != nil {
 		t.Fatalf("unary hello returned error: %s", err)
 	}
@@ -75,5 +75,51 @@ func TestUnaryHelloOkResponse(t *testing.T) {
 
 	if resp.Message != "ok" {
 		t.Fatalf("expected message 'ok' but got %s", resp.Message)
+	}
+}
+
+func TestUnaryHelloValidateResponse(t *testing.T) {
+	testCases := []struct {
+		name     string
+		errormsg string
+	}{
+		{
+			"",
+			"name can not be empty",
+		},
+		{
+			"test1",
+			"name can not be 'test1'",
+		},
+		{
+			"test2",
+			"name can not be 'test2'",
+		},
+		{
+			"test3",
+			"name can not be 'test3'",
+		},
+	}
+
+	grpcClient, cleanUp := setupGRPC()
+	defer cleanUp()
+
+	for _, testCase := range testCases {
+		resp, err := grpcClient.UnaryHello(
+			context.Background(),
+			&protobufs.UnaryHelloRequest{Name: testCase.name},
+		)
+
+		if err != nil {
+			t.Fatalf("unary hello returned error: %s", err)
+		}
+
+		if resp.Code != 2 {
+			t.Errorf("expected code 1 but got %d", resp.Code)
+		}
+
+		if resp.Message != testCase.errormsg {
+			t.Fatalf("expected message 'ok' but got %s", resp.Message)
+		}
 	}
 }
