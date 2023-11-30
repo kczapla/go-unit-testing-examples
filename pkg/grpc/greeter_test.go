@@ -29,8 +29,6 @@ func setupGRPC() (protobufs.GreeterClient, CleanUpFunc) {
 		}
 	}()
 
-	ctx := context.Background()
-
 	dialOptions := []grpc.DialOption{
 		grpc.WithContextDialer(
 			func(context.Context, string) (net.Conn, error) {
@@ -38,11 +36,9 @@ func setupGRPC() (protobufs.GreeterClient, CleanUpFunc) {
 			},
 		),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
 	}
 
-	grpcServerConnection, err := grpc.DialContext(
-		ctx,
+	grpcServerConnection, err := grpc.Dial(
 		"",
 		dialOptions...,
 	)
@@ -198,5 +194,49 @@ func TestClientStreamingHello(t *testing.T) {
 
 	if reply.GetMessage() != "ok" {
 		t.Fatalf("expected reply message to be 'ok' but got '%s'", reply.GetMessage())
+	}
+}
+
+func TestBidirectionalStreamingHello(t *testing.T) {
+	grpcClient, cleanUp := setupGRPC()
+	defer cleanUp()
+
+	stream, err := grpcClient.BidirectionalStreamingHello(context.Background())
+	if err != nil {
+		t.Fatalf("%v.BidrectionalStreamingHello = _, %v", grpcClient, err)
+	}
+
+	names := []string{
+		"test1",
+		"test2",
+		"test3",
+		"test4",
+	}
+
+	for _, name := range names {
+		req := protobufs.BidirectionalStreamingHelloRequest{Name: name}
+		if err := stream.Send(&req); err != nil {
+			t.Fatalf("%v.Send(%v) = %v", stream, name, err)
+		}
+
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			return
+		}
+
+		if err != nil {
+			t.Fatalf("%v.Recv() = %v", stream, err)
+		}
+
+		if resp.Message != "ok" {
+			t.Fatalf("resp message was '%s' but expected 'ok'", resp.Message)
+		}
+	}
+
+	stream.CloseSend()
+
+	_, err = stream.Recv()
+	if err != io.EOF {
+		t.Fatalf("%v.Recv() = %v", stream, err)
 	}
 }

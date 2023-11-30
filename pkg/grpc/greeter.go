@@ -55,8 +55,21 @@ func (gs *greeterServer) ClientStreamingHello(stream protobufs.Greeter_ClientStr
 	}
 }
 
-func (gs *greeterServer) BidirectionalStreamingHello(protobufs.Greeter_BidirectionalStreamingHelloServer) error {
-	return nil
+func (gs *greeterServer) BidirectionalStreamingHello(stream protobufs.Greeter_BidirectionalStreamingHelloServer) error {
+	for {
+		_, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+
+		if err != nil {
+			return err
+		}
+
+		if err := stream.Send(&protobufs.BidirectionalStreamingHelloResponse{Message: "ok"}); err != nil {
+			return err
+		}
+	}
 }
 
 func NewServer() *greeterServer {
