@@ -166,3 +166,37 @@ func TestServerStreamingHello(t *testing.T) {
 		}
 	}
 }
+
+func TestClientStreamingHello(t *testing.T) {
+	grpcClient, cleanUp := setupGRPC()
+	defer cleanUp()
+
+	stream, err := grpcClient.ClientStreamingHello(context.Background())
+	if err != nil {
+		t.Fatalf("client streaming hello returned error: %s", err)
+	}
+
+	testCases := []string{
+		"test1",
+		"test2",
+		"test3",
+		"test4",
+		"test5",
+	}
+
+	for _, testCase := range testCases {
+		req := &protobufs.ClientStreamingHelloRequest{Name: testCase}
+		if err := stream.Send(req); err != nil {
+			t.Fatalf("%v.Send(%v) = %v", stream, req, err)
+		}
+	}
+
+	reply, err := stream.CloseAndRecv()
+	if err != nil {
+		t.Fatalf("%v.CloseAndRecv() got error %v, want %v", stream, err, nil)
+	}
+
+	if reply.GetMessage() != "ok" {
+		t.Fatalf("expected reply message to be 'ok' but got '%s'", reply.GetMessage())
+	}
+}

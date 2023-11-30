@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"io"
 
 	"github.com/kczapla/go-unit-testing-examples/api/protobufs"
 )
@@ -42,8 +43,16 @@ func (gs *greeterServer) ServerStreamingHello(
 	return nil
 }
 
-func (gs *greeterServer) ClientStreamingHello(protobufs.Greeter_ClientStreamingHelloServer) error {
-	return nil
+func (gs *greeterServer) ClientStreamingHello(stream protobufs.Greeter_ClientStreamingHelloServer) error {
+	for {
+		_, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&protobufs.ClientStreamingHelloResponse{Message: "ok"})
+		}
+		if err != nil {
+			return err
+		}
+	}
 }
 
 func (gs *greeterServer) BidirectionalStreamingHello(protobufs.Greeter_BidirectionalStreamingHelloServer) error {
